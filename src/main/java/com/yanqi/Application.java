@@ -6,6 +6,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,59 +37,95 @@ public class Application {
         String format = simpleDateFormat.format(date);
         String dataOnlyNum = yyyymmdd.format(date);
 
+        errorHandler(format,dataOnlyNum);
+    }
+
+    private static int time = 0;
+    private static void errorHandler(String dataByFormat,String dataOnlyNum){
         try {
-            getPD(format, dataOnlyNum);
+            getPD(dataByFormat, dataOnlyNum);
         } catch (IOException e) {
+//            错误出现三次后报错
+            if (time<3){
+                time++;
+                System.out.println("错误：" + time);
+                Application.errorHandler(dataByFormat,dataOnlyNum);
+            }
             e.printStackTrace();
         }
     }
 
     public static void getPD(String dataByFormat,String dataOnlyNum) throws IOException {
         String urlHead = "http://paper.people.com.cn/rmrb/images/";
+        String urlNameOfPage = "http://paper.people.com.cn/rmrb/html/"+ dataByFormat +"/nbs.D110000renmrb_01.htm";
         String nowUrl;
-        String[] fileName = {
-//            "01版要闻","02版要闻","03版要闻","04版要闻","05版要闻",
-//            "06版要闻","07版评论","08版广告","09版理论","10版经济",
-//            "11版政治","12版文化","13版生态","14版体育","15版综合",
-//            "16版广告","17版国际","18版民主政治","19版法治","20版副刊"
-                "01版","02版","03版","04版","05版",
-                "06版","07版","08版","09版","10版",
-                "11版","12版","13版","14版","15版",
-                "16版","17版","18版","19版","20版"
-        };
+        String[] fileName = getNameOfPage(urlNameOfPage);
         File file1 = new File("C:\\Users\\YQQ\\Desktop\\" + dataOnlyNum);
         if (!file1.isDirectory()) {
             file1.mkdirs();
         }
-        for (int i = 1; i <= 20; i++){
+        for (int i = 1; i <= fileName.length; i++){
+            File file = new File("C:\\Users\\YQQ\\Desktop\\" + dataOnlyNum + "\\" + fileName[i-1] + ".pdf");
+            if(file.exists()) {
+                continue;
+            }
             nowUrl = urlHead + dataByFormat + "/" + (i >= 10 ? i : ("0" + i)) + "/" + "rmrb" + dataOnlyNum + (i >= 10 ? i : ("0" + i)) + ".pdf";
             System.out.println(nowUrl);
-            System.out.println("C:\\Users\\YQQ\\Desktop\\" + dataOnlyNum + "\\" + fileName[i-1] + ".pdf");
-            // 1.打开游览器,创建HttpClient对象
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            // 2.输入网址,发起get请求创建HttpGet对象
-            HttpGet httpGet = new HttpGet(nowUrl);
-            // 3.按回车发起请求,返回响应,使用HttpClient对象发起请求
-            CloseableHttpResponse response = httpClient.execute(httpGet);
+            CloseableHttpResponse response = getResponse(nowUrl);
             // 4.解析响应,获取数据
             // 判断状态码是否是200
             if (response.getStatusLine().getStatusCode() == 200) {
                 //获取网页源代码的用法
-                HttpEntity entity = response.getEntity();
-                InputStream stream = entity.getContent();
-                File file = new File("C:\\Users\\YQQ\\Desktop\\" + dataOnlyNum + "\\" + fileName[i-1] + ".pdf");
+                InputStream stream = response.getEntity().getContent();
+
                 FileOutputStream fileOutputStream = new FileOutputStream(file,true);
+                byte[] bytes = new byte[1024*1024];
                 int len = 0;
-                while ((len = stream.read()) != -1) {
-                    fileOutputStream.write(len);
+                while ((len = stream.read(bytes)) != -1) {
+                    fileOutputStream.write(bytes,0,len);
                 }
                 stream.close();
                 fileOutputStream.close();
-                httpClient.close();
             }else {
                 System.out.println("没有请求回数据哟！");
             }
         }
+    }
+
+    public static String[] getNameOfPage(String url){
+        CloseableHttpResponse response = getResponse(url);
+        if (response.getStatusLine().getStatusCode() == 200) {
+            HttpEntity httpEntity = response.getEntity();
+            Document html = null;
+            try {
+                html = Jsoup.parse(EntityUtils.toString(httpEntity, "utf8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Elements nameOfPage = html.getElementsByClass("swiper-slide");
+            String[] res = new String[nameOfPage.size()];
+            int p = 0;
+            for (Element item : nameOfPage){
+                res[p] = item.getElementById("pageLink").html();
+                p++;
+            }
+            return res;
+        }
+        return null;
+    }
+
+    public static CloseableHttpResponse getResponse(String url){
+        // 1.打开游览器,创建HttpClient对象
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        // 2.输入网址,发起get请求创建HttpGet对象
+        HttpGet httpGet = new HttpGet(url);
+        // 3.按回车发起请求,返回响应,使用HttpClient对象发起请求
+        try {
+            return httpClient.execute(httpGet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
 
