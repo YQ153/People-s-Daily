@@ -1,6 +1,5 @@
 package com.yanqi;
 
-
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -28,16 +27,15 @@ import java.util.Date;
 public class Application {
     /**
      * 程序入口
-     * @param args
      */
     public static void main(String[] args){
         Date date = new Date();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM/dd");
         SimpleDateFormat yyyymmdd = new SimpleDateFormat("yyyyMMdd");
-        String format = simpleDateFormat.format(date);
+        String dataByFormat = simpleDateFormat.format(date);
         String dataOnlyNum = yyyymmdd.format(date);
 
-        errorHandler(format,dataOnlyNum);
+        errorHandler(dataByFormat,dataOnlyNum);
     }
 
     private static int time = 0;
@@ -46,7 +44,7 @@ public class Application {
             getPD(dataByFormat, dataOnlyNum);
         } catch (IOException e) {
 //            错误出现三次后报错
-            if (time<3){
+            if (time < 3){
                 time++;
                 System.out.println("错误：" + time);
                 Application.errorHandler(dataByFormat,dataOnlyNum);
@@ -55,7 +53,7 @@ public class Application {
         }
     }
 
-    public static void getPD(String dataByFormat,String dataOnlyNum) throws IOException {
+    public static void getPD(String dataByFormat, String dataOnlyNum) throws IOException {
         String urlHead = "http://paper.people.com.cn/rmrb/images/";
         String urlNameOfPage = "http://paper.people.com.cn/rmrb/html/"+ dataByFormat +"/nbs.D110000renmrb_01.htm";
         String nowUrl;
@@ -128,5 +126,3 @@ public class Application {
         return null;
     }
 }
-
-
