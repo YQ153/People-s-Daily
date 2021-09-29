@@ -35,7 +35,7 @@ public class IOThread implements Runnable {
 
     }
 
-    static void writeToFile(InputStream is, FileOutputStream fileOutputStream) throws IOException {
+    private static void writeToFile(InputStream is, FileOutputStream fileOutputStream) throws IOException {
         byte[] bytes = new byte[1024 * 2048];
         int len = 0;
         while ((len = is.read(bytes)) != -1) {
