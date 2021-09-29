@@ -12,7 +12,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -29,13 +28,18 @@ public class Application {
      * 程序入口
      */
     public static void main(String[] args){
+//        测试运行时间
+        long startTime=System.currentTimeMillis();
+
         Date date = new Date();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM/dd");
         SimpleDateFormat yyyymmdd = new SimpleDateFormat("yyyyMMdd");
         String dataByFormat = simpleDateFormat.format(date);
         String dataOnlyNum = yyyymmdd.format(date);
-
         errorHandler(dataByFormat,dataOnlyNum);
+
+        long endTime=System.currentTimeMillis();
+        System.out.println("程序运行时间： "+(endTime-startTime)+"ms");
     }
 
     private static int time = 0;
@@ -76,14 +80,13 @@ public class Application {
                 //获取网页源代码的用法
                 InputStream stream = response.getEntity().getContent();
 
-                FileOutputStream fileOutputStream = new FileOutputStream(file,true);
-                byte[] bytes = new byte[1024*1024];
-                int len = 0;
-                while ((len = stream.read(bytes)) != -1) {
-                    fileOutputStream.write(bytes,0,len);
-                }
-                stream.close();
-                fileOutputStream.close();
+                /**
+                 * IOThread ioThread = new IOThread(file, stream);
+                 * ioThread.run();
+                 */
+
+                Thread thread = new Thread(new IOThread(file, stream));
+                thread.start();
             }else {
                 System.out.println("没有请求回数据哟！");
             }

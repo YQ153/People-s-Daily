@@ -17,7 +17,7 @@ class ThreadTest {
         int maximumPoolSize = 4;
         long keepAliveTime = 10;
         TimeUnit unit = TimeUnit.SECONDS;
-        BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(2);
+        BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(4);
         ThreadFactory threadFactory = new NameTreadFactory();
         RejectedExecutionHandler handler = new MyIgnorePolicy();
         ThreadPoolExecutor executor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit,
@@ -29,7 +29,7 @@ class ThreadTest {
             executor.execute(task);
         }
 
-        System.in.read(); //阻塞主线程
+//        System.in.read(); //阻塞主线程
     }
 
     static class NameTreadFactory implements ThreadFactory {
