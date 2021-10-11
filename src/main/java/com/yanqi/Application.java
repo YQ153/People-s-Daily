@@ -1,5 +1,7 @@
 package com.yanqi;
 
+import com.yanqi.myEnum.DateFormatEnum;
+import com.yanqi.utils.DateUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,8 +16,8 @@ import org.jsoup.select.Elements;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 
 /**
  * @author YQQ
@@ -27,15 +29,21 @@ public class Application {
     /**
      * 程序入口
      */
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
+
+
+        /**
+         * 判断是否请求哪日的报纸
+         */
+
+
 //        测试运行时间
         long startTime=System.currentTimeMillis();
+        DateUtils dateUtils = new DateUtils(DateFormatEnum.Format_ONE);
+        String dataByFormat = dateUtils.getDateWithString();
+        dateUtils.setDateFormatEnum(DateFormatEnum.Format_TWE);
+        String dataOnlyNum = dateUtils.getDateWithString();
 
-        Date date = new Date();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM/dd");
-        SimpleDateFormat yyyymmdd = new SimpleDateFormat("yyyyMMdd");
-        String dataByFormat = simpleDateFormat.format(date);
-        String dataOnlyNum = yyyymmdd.format(date);
         errorHandler(dataByFormat,dataOnlyNum);
 
         long endTime=System.currentTimeMillis();
@@ -73,7 +81,10 @@ public class Application {
             }
             nowUrl = urlHead + dataByFormat + "/" + (i >= 10 ? i : ("0" + i)) + "/" + "rmrb" + dataOnlyNum + (i >= 10 ? i : ("0" + i)) + ".pdf";
             System.out.println(nowUrl);
+            long getDataStartTime=System.currentTimeMillis();
             CloseableHttpResponse response = getResponse(nowUrl);
+            long getDataEndTime=System.currentTimeMillis();
+            System.out.println("获取数据用时： "+(getDataEndTime-getDataEndTime)+"ms");
             // 4.解析响应,获取数据
             // 判断状态码是否是200
             if (response.getStatusLine().getStatusCode() == 200) {
@@ -93,10 +104,22 @@ public class Application {
         }
     }
 
+    private static int timeOne = 0;
     public static String[] getNameOfPage(String url){
         CloseableHttpResponse response = getResponse(url);
         if (response.getStatusLine().getStatusCode() == 200) {
-            HttpEntity httpEntity = response.getEntity();
+            HttpEntity httpEntity = null;
+            try{
+                httpEntity = response.getEntity();
+            }catch (Exception e){
+                if (timeOne < 3){
+                    getNameOfPage(url);
+                    timeOne++;
+                    System.out.println("执行了：" + (timeOne + 1) + "次");
+                }else {
+                    e.printStackTrace();
+                }
+            }
             Document html = null;
             try {
                 html = Jsoup.parse(EntityUtils.toString(httpEntity, "utf8"));
